@@ -1,7 +1,4 @@
 import dateutil.relativedelta
-import requests
-import streamlit as st
-import psycopg2.extras
 import pandas as pd
 import datetime
 import logging
@@ -10,7 +7,6 @@ import utils
 import uuid
 import time
 import re
-import os
 
 logging.basicConfig(
     level=logging.INFO,
@@ -343,7 +339,7 @@ class Account():
         if rows:
             for row in rows:
                 if user_id == row[0]:
-                    if currency_code == row[1]:
+                    if currency_code == row[2]:
                         account_exists = True
                         break
         
@@ -352,6 +348,7 @@ class Account():
                 conn = utils.connect_to_db()
                 account_data = (
                     user_id,
+                    account_id,
                     currency_code,
                     initial_balance,
                     is_active
@@ -359,8 +356,8 @@ class Account():
                 
                 with conn.cursor() as cur:
                     cur.execute("INSERT INTO Accounts(" \
-                                "user_id, currency_code, balance, is_active) " \
-                                "Values(%s, %s, %s, %s)", (account_data))
+                                "user_id, account_id, currency_code, balance, is_active) " \
+                                "Values(%s, %s, %s, %s, %s)", (account_data))
                 
                     conn.commit()
                     logger.info("Account created successfully")
