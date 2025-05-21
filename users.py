@@ -124,7 +124,7 @@ class User():
         Returns:
             String detailing if login was successful or not
         '''
-        
+        conn = None
         try:
             conn = utils.connect_to_db()
             with conn.cursor() as cur:
@@ -150,6 +150,7 @@ class User():
             result = utils.verify_password(password_hash, password)
             if result:
                 try:
+                    conn = utils.connect_to_db()
                     with conn.cursor() as cur:
                         cur.execute("UPDATE Users SET failed_attempts = 0 WHERE username = %s", (username,))
 
@@ -163,6 +164,7 @@ class User():
             else:
                 failed_attempts += 1
                 try:
+                    conn = utils.connect_to_db()
                     with conn.cursor() as cur:
                         cur.execute("UPDATE Users SET failed_attempts = %s WHERE username = %s",(failed_attempts, username))
                 
@@ -190,7 +192,7 @@ class User():
         Returns:
             A tuple containing user details
         '''
-        
+        conn = None
         try:
             conn = utils.connect_to_db()
             with conn.cursor() as cur:
@@ -224,6 +226,8 @@ def update_user_details(user_id, field, value):
     Returns:
         Success or failure statement
     '''
+    conn = None
+
     try:
         conn = utils.connect_to_db()
         
@@ -249,7 +253,7 @@ def update_user_details(user_id, field, value):
                             raise
                     finally:
                         cur.close()
-                        utils.release_conn(conn)
+                        
                
                 elif field == "email":
                     email_pattern = r'^\w{1,50}@\w{1,50}$\.(com|net|org)'
@@ -269,7 +273,7 @@ def update_user_details(user_id, field, value):
                             raise
                         finally:
                             cur.close()
-                            utils.release_conn(conn)
+                            
                     else:
                         raise ValueError ("Email Invalid")
                 
@@ -287,9 +291,7 @@ def update_user_details(user_id, field, value):
                         raise
                     finally:
                         cur.close()
-                        utils.release_conn(conn)
-                else:
-                        return "You do not have access to change this. Please check option again"
+                        
     except Exception as e:
         logger.error(f"Error updating field: {e}")
         raise
@@ -320,7 +322,7 @@ class Account():
             Success message with account id attached or failure message
 
         '''
-        
+        conn = None
         try:
             conn = utils.connect_to_db()
             with conn.cursor() as cur:
@@ -347,6 +349,7 @@ class Account():
         
         if not account_exists:
             try:
+                conn = utils.connect_to_db()
                 account_data = (
                     user_id,
                     currency_code,
@@ -382,6 +385,7 @@ class Account():
         Returns:
             Tuple containing lists of all accounts and their details
         '''        
+        conn = None
         try:
             conn = utils.connect_to_db()
             with conn.cursor() as cur:
@@ -406,7 +410,7 @@ class Account():
         Returns:
             Success message if complete. Error if not
         '''
-        conn = utils.connect_to_db()
+        conn = None
         
         try:
             with conn.cursor() as cur:
@@ -429,6 +433,7 @@ def deposit(user_id, account_id, amount):
     tx_type = "Deposit"
     created_on = datetime.datetime.now()
     tx_id = str(uuid.uuid4()) + str(int(time.time()) * 1000)
+    conn = None
 
     try:
         conn = utils.connect_to_db()
@@ -475,6 +480,7 @@ def withdraw(user_id, account_id, amount):
     created_on = datetime.datetime.now()
     tx_type = "Withdraw"
     tx_id = str(uuid.uuid4()) + str(int(time.time()) * 1000)
+    conn = None
 
     try:
         conn = utils.connect_to_db()
@@ -536,6 +542,7 @@ def transfer(source_account_id, target_account_id, from_user_id, to_user_id, amo
     created_on = datetime.datetime.now()
     tx_type = "Transfer"
     tx_id = str(uuid.uuid4()) + str(int(time.time()) * 1000)
+    conn = None
     
     try:
         # Get a connection
@@ -581,6 +588,7 @@ def transfer(source_account_id, target_account_id, from_user_id, to_user_id, amo
                         symbol = utils.format_currency(amount, code)
 
                         try:
+                            conn = utils.connect_to_db()
                             with conn.cursor() as cur:
                                 # Debit account
                                 cur.execute("UPDATE Accounts SET balance = %s WHERE account_id = %s;", (from_new_balance, source_account_id))
@@ -626,7 +634,7 @@ def get_transaction_history(account_id, startdate=None, enddate=None):
         List containing transactions over time
     
     '''
-
+    conn = None
     try:
         conn = utils.connect_to_db()
 
@@ -644,6 +652,7 @@ def get_transaction_history(account_id, startdate=None, enddate=None):
 
     if accounts:
         try:
+            conn = utils.connect_to_db()
             # Fetch account's transactions from database
             with conn.cursor() as cur:
                 cur.execute("SELECT * FROM Transactions WHERE from_account_id = %s OR to_account_id = %s", (account_id, account_id))
@@ -724,6 +733,7 @@ def get_supported_currencies():
     Returns:
         A list of all the supported currencies
     '''
+    conn = None
     try:
         conn = utils.connect_to_db()
 
@@ -761,11 +771,8 @@ def add_currency_code(currency_code):
     Returns:
         Success or failure string
     '''
-    
-        
-
+    conn = None
     resp = utils.fetch_exchange_rate()
-
     
     if resp:
         codes = resp["data"].keys()
@@ -786,6 +793,7 @@ def add_currency_code(currency_code):
     if currency_code not in existing_codes:
         if currency_code in codes:
             try:
+                conn = utils.connect_to_db()
                 with conn.cursor() as cur:
                     cur.execute("INSERT INTO Currencies (currency_code) Values(%s)", (currency_code,))
             
@@ -863,6 +871,7 @@ def currency_exchange(account_id_from, account_id_to, to_user_id, from_user_id, 
     if from_is_active:
         if to_is_active:
             try:
+                conn = utils.connect_to_db()
                 with conn.cursor() as cur:
                     cur.execute("UPDATE Accounts SET balance = %s WHERE account_id = %s", (from_new_balance, account_id_from))
 
@@ -906,10 +915,11 @@ def get_account_balance_history(account_id, user_id, period):
     Returns:
         A dictionary of date and balance
     '''
-    conn = utils.connect_to_db()
+    conn = None
 
     # Fetch transactions for account
     try:
+        conn = utils.connect_to_db()
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM Transactions WHERE (to_account_id = %s OR from_account_id = %s)" \
                         " AND (from_user_id = %s OR to_user_id = %s)", (account_id, account_id, user_id, user_id))
@@ -935,6 +945,7 @@ def get_account_balance_history(account_id, user_id, period):
         current_day = datetime.date.today()
         result = {}
         result[current_day] = balance
+        conn = utils.connect_to_db()
 
         # Loop for monthly analysis
         if period == 'monthly':
@@ -944,6 +955,7 @@ def get_account_balance_history(account_id, user_id, period):
 
                 # Gets net flows over given monthly
                 try:
+                    
                     with conn.cursor() as cur:
                         cur.execute("""WITH deposits AS (
                                     SELECT COALESCE(SUM(amount),0) AS amount_dep FROM Transactions 
@@ -987,6 +999,7 @@ def get_account_balance_history(account_id, user_id, period):
             
             # Fetch net flows over weekly timeframe
             try:
+                
                 with conn.cursor() as cur:
                     cur.execute("""WITH deposits AS (
                                 SELECT COALESCE(SUM(amount),0) AS amount_dep FROM Transactions 
@@ -1127,9 +1140,10 @@ def generate_account_statement(account_id, user_id, start_date, end_date):
     Returns:   
         A list of dictionaries containing transactions within specified timeframe
     '''
-    conn = utils.connect_to_db()
+    conn = None
 
     try:
+        conn = utils.connect_to_db()
         with conn.cursor() as cur:
             cur.execute("WITH net_tx AS (" \
                         "SELECT SUM(amount) AS amount FROM Transactions " \
@@ -1147,7 +1161,7 @@ def generate_account_statement(account_id, user_id, start_date, end_date):
         raise
     finally:
         cur.close
-        utils.release_conn(conn)
+        
 
     if rows:
         has_transactions = True
