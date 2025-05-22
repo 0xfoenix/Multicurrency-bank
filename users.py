@@ -435,7 +435,7 @@ def deposit(user_id, account_id, amount):
     try:
         conn = utils.connect_to_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT balance, currency_code, status FROM Accounts WHERE account_id = %s AND user_id = %s;", (account_id, user_id))
+            cur.execute("SELECT balance, currency_code, is_active FROM Accounts WHERE account_id = %s AND user_id = %s;", (account_id, user_id))
             rows = cur.fetchone()
             balance = rows[0]
             currency_code = rows[1]
@@ -482,7 +482,7 @@ def withdraw(user_id, account_id, amount):
     try:
         conn = utils.connect_to_db()
         with conn.cursor() as cur:
-            cur.execute("SELECT balance, currency_code, status FROM Accounts WHERE account_id = %s AND user_id = %s;", (account_id, user_id))
+            cur.execute("SELECT balance, currency_code, is_active FROM Accounts WHERE account_id = %s AND user_id = %s;", (account_id, user_id))
             rows = cur.fetchone()
 
             balance = rows[0]
@@ -834,10 +834,10 @@ def currency_exchange(account_id_from, account_id_to, to_user_id, from_user_id, 
 
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT balance, currency_code, status FROM Accounts WHERE account_id = %s AND user_id = %s", (account_id_from, from_user_id))
+            cur.execute("SELECT balance, currency_code, is_active FROM Accounts WHERE account_id = %s AND user_id = %s", (account_id_from, from_user_id))
             from_rows = cur.fetchone()
 
-            cur.execute("SELECT balance, currency_code, status FROM Accounts WHERE user_id = %s AND account_id = %s", (to_user_id, account_id_to))
+            cur.execute("SELECT balance, currency_code, is_active FROM Accounts WHERE user_id = %s AND account_id = %s", (to_user_id, account_id_to))
             to_rows = cur.fetchone()
     except Exception as e:
         logger.error(f"Error fetching details from Database: {e}")
