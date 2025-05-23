@@ -1,0 +1,59 @@
+# Multi-currency Bank Management System
+
+A backend-focused Multi-currency Bank Management System written in Python, 
+featuring a CLI for managing users, accounts, and transactions.
+Built to integrate with PostgreSQL and designed for easy expansion
+
+## Features
+- User registration
+- Account creation and closure
+- Deposit, withdrawal and transfer operations
+- Currency Exchange operations
+- Transaction history logging
+- PostgreSQL integrations with connection pooling
+- Interactive CLI menu
+
+## Installation
+
+### Requirements
+
+- Python 3.10+
+- PostgreSQL
+- pip (Python package manager)
+
+### Setup
+1. Clone the repository:
+    ```bash
+    git.clone https://github.com/0xfoenix/multicurrency-bank.git
+    cd multicurrency-bank
+
+2. Set up a virtual environment
+        python -m venv venv
+        source venv/bin/activate
+
+3. Install dependencies
+        pip install -r requirements.txt
+
+4. Create a .env file in the root directory with the following variables:
+    - DBNAME=your_db_name
+    - PORT=5432
+    - USER=your_username
+    - PASSWORD=your_db_password
+    - HOST=localhost
+    - API_KEY=your_api_key_here
+    > You can get your API key from [freecurrencyapi](https://freecurrencyapi.com/docs/)
+5. Set up PostgreSQL
+    - Create a Database
+    - Update .env with your DB credentials
+
+### Usage
+1. Run the CLI app
+    python cli.py
+
+
+## Project Structure
+|---- cli.py
+|---- utils.py
+|---- users.py
+|---- requirements.txt
+|---- README.md
